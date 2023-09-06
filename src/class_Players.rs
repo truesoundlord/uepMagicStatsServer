@@ -195,8 +195,43 @@ impl traits::UEPObject for classPlayers
 		results.is_ok()
 	}
 
-	fn insertme(self, connection: &mut PooledConn) -> u32 {
-		todo!()
+	fn insertme(self, connection: &mut PooledConn) -> u32
+	{
+		let mut mysqlquery = String::from
+			(
+				"INSERT INTO Players (Alias,Colors,Victories,Conceded,Defeated,Draws,MyScore,HisScore,MatchesDones)
+						VALUES ('<PHAlias>',<PHColor>,<PHVictories>,<PHConceded>,<PHDefeated>,<PHDraws>,<PHMyScore>,<PHHisScore>,<PHMatchesDone>)"
+					.replace("<PHAlias>",&self.Alias.clone())
+					.replace("<PHColor>",self.Colors.to_string().as_str())
+					.replace("<PHVictories>",self.Victories.to_string().as_str())
+					.replace("<PHConceded>",self.Conceded.to_string().as_str())
+					.replace("<PHDefeated>",self.Defeated.to_string().as_str())
+					.replace("<PHDraws>",self.Draws.to_string().as_str())
+					.replace("<PHMyScore>",self.MyScore.to_string().as_str())
+					.replace("<PHHisScore>",self.HisScore.to_string().as_str())
+					.replace("<PHMatchesDone>",self.MatchesDone.to_string().as_str())
+					.replace("\'","\\'")
+			);
+		let results = connection.query::<classPlayers,String>(mysqlquery);
+		if results.is_err()
+		{
+			eprintln!("[{}] -> {}","ERROR".red().bold().blink(),results.as_ref().unwrap_err().to_string());
+			0
+		}
+		else
+		{
+			mysqlquery = String::from("SELECT MAX(idPlayer) FROM Players");
+			let newid = connection.query::<u32,String>(mysqlquery);
+			if newid.is_ok()
+			{
+				*newid.unwrap().get(0).unwrap()
+			}
+			else
+			{
+				eprintln!("[{}] -> {}","ERROR".red().bold().blink(),results.as_ref().unwrap_err().to_string());
+				0
+			}
+		}
 	}
 }
 

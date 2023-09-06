@@ -170,8 +170,35 @@ impl traits::UEPObject for classComment
 		results.is_ok()
 	}
 
-	fn insertme(self, connection: &mut PooledConn) -> u32 {
-		todo!()
+	fn insertme(self, connection: &mut PooledConn) -> u32
+	{
+		let mut mysqlquery = String::from
+			(
+				"INSERT INTO Comments (idMatch, MatchComment) VALUES (<PHidm>,'<PHcom>')"
+					.replace("<PHidm>",self.idMatch.to_string().as_str())
+					.replace("<PHcom>",&self.MatchComment.clone())
+					.replace("\'","\\'")
+			);
+		let results = connection.query::<classComment,String>(mysqlquery);
+		if results.is_err()
+		{
+			eprintln!("[{}] -> {}","ERROR".red().bold().blink(),results.as_ref().unwrap_err().to_string());
+			0
+		}
+		else
+		{
+			mysqlquery = String::from("SELECT MAX(idComment) FROM Comments");
+			let newid = connection.query::<u32,String>(mysqlquery);
+			if newid.is_ok()
+			{
+				*newid.unwrap().get(0).unwrap()
+			}
+			else
+			{
+				eprintln!("[{}] -> {}","ERROR".red().bold().blink(),results.as_ref().unwrap_err().to_string());
+				0
+			}
+		}
 	}
 }
 

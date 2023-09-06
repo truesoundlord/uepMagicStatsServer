@@ -193,8 +193,38 @@ impl traits::UEPObject for classMythic
 		results.is_ok()
 	}
 
-	fn insertme(self, connection: &mut PooledConn) -> u32 {
-		todo!()
+	fn insertme(self, connection: &mut PooledConn) -> u32
+	{
+		let mut mysqlquery = String::from
+			(
+				"INSERT INTO Mythic (idMatch, PourcentageEn, PourcentagePl, TopEn, TopPl)
+						VALUES (<PHidMatch>,<PHPerEn>,<PHPerPl>,<PHTEn>,<PHTPl)"
+					.replace("<PHidMatch>",self.idMatch.to_string().as_str())
+					.replace("<PHPerEn>",self.PourcentageEn.to_string().as_str())
+					.replace("<PHPerPl>",self.PourcentagePl.to_string().as_str())
+					.replace("<PHTEn>",self.TopEn.to_string().as_str())
+					.replace("<PHTPl>",self.TopPl.to_string().as_str())
+			);
+		let results = connection.query::<classMythic,String>(mysqlquery);
+		if results.is_err()
+		{
+			eprintln!("[{}] -> {}","ERROR".red().bold().blink(),results.as_ref().unwrap_err().to_string());
+			0
+		}
+		else
+		{
+			mysqlquery = String::from("SELECT MAX(idMythic) FROM Mythic");
+			let newid = connection.query::<u32,String>(mysqlquery);
+			if newid.is_ok()
+			{
+				*newid.unwrap().get(0).unwrap()
+			}
+			else
+			{
+				eprintln!("[{}] -> {}","ERROR".red().bold().blink(),results.as_ref().unwrap_err().to_string());
+				0
+			}
+		}
 	}
 }
 

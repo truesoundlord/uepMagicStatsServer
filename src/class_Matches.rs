@@ -201,8 +201,42 @@ impl traits::UEPObject for classMatches
 		results.is_ok()
 	}
 
-	fn insertme(self, connection: &mut PooledConn) -> u32 {
-		todo!()
+	fn insertme(self, connection: &mut PooledConn) -> u32
+	{
+		let mut mysqlquery = String::from
+			(
+				"INSERT INTO Matches (idPlayer,MatchColor,Turns,HisScore,MyScore,Result,EnLvl,MyLvl,Manas)
+						VALUES (<PHidPlayer>,<PHMatchColor>,<PHTurns>,<PHHisScore>,<PHMyScore>,<PHResult>,<PHEnLvl>,<PHMyMvl>,<PHManas>)"
+					.replace("<PHidPlayer>",self.idPlayer.to_string().as_str())
+					.replace("<PHMatchColor>",self.MatchColor.to_string().as_str())
+					.replace("<PHTurns>",self.Turns.to_string().as_str())
+					.replace("<PHHisScore>",self.HisScore.to_string().as_str())
+					.replace("<PHMyScore>",self.MyScore.to_string().as_str())
+					.replace("<PHResult>",self.Result.to_string().as_str())
+					.replace("<PHEnLvl>",self.EnLvl.to_string().as_str())
+					.replace("<PHMyLvl>",self.MyLvl.to_string().as_str())
+					.replace("<PHManas>",self.Manas.to_string().as_str())
+			);
+		let results = connection.query::<classMatches,String>(mysqlquery);
+		if results.is_err()
+		{
+			eprintln!("[{}] -> {}","ERROR".red().bold().blink(),results.as_ref().unwrap_err().to_string());
+			0
+		}
+		else
+		{
+			mysqlquery = String::from("SELECT MAX(idMatch) FROM Matches");
+			let newid = connection.query::<u32,String>(mysqlquery);
+			if newid.is_ok()
+			{
+				*newid.unwrap().get(0).unwrap()
+			}
+			else
+			{
+				eprintln!("[{}] -> {}","ERROR".red().bold().blink(),results.as_ref().unwrap_err().to_string());
+				0
+			}
+		}
 	}
 }
 
