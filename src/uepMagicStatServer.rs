@@ -26,7 +26,7 @@ use termios::tcsetattr;
 
 use signal_hook::consts::SIGINT;
 use signal_hook::iterator::Signals;
-use simplelog::{ColorChoice, CombinedLogger, Config, LevelFilter, TerminalMode, TermLogger, WriteLogger};
+use simplelog::{ColorChoice, CombinedLogger, Config, ConfigBuilder, LevelFilter, TerminalMode, TermLogger, WriteLogger};
 
 use text_colorizer::{ColoredString, Colorize};
 
@@ -67,12 +67,14 @@ fn main()
         eprintln!("[Create {}] {}","ERROR".red().bold().blink(),file.as_ref().unwrap_err());
     }
 
+    let mut maconfig = ConfigBuilder::new();
+    maconfig.set_time_offset_to_local();
     CombinedLogger::init
       (
           vec!
           [
               TermLogger::new(LevelFilter::Error,Config::default(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi),
-              WriteLogger::new(LevelFilter::Info,Config::default(),file.unwrap())
+              WriteLogger::new(LevelFilter::Info,maconfig.build(),file.unwrap())
           ]
       );
 
@@ -111,7 +113,8 @@ fn main()
             {
                 for thesignal in signals.unwrap().forever()
                 {
-                    eprintln!("Received signal {:?}",thesignal);
+                    info!("Received signal {:?}",thesignal);
+                    println!("[{}] {}","INFO".bright_cyan().bold(),"Manual shutdown of server or kill signal received... exiting".italic().bright_white());
                     let configset = configterminal.as_ref().unwrap().c_lflag;
                     configterminal.as_mut().unwrap().c_lflag |= ICANON|ECHO|ECHOCTL;
 
