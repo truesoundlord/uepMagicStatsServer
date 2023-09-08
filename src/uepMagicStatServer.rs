@@ -58,7 +58,7 @@ fn main()
         eprintln!("[Mkdir {}] {}","ERROR".red().bold().blink(),folder.unwrap_err());
     }
 
-    let file = OpenOptions::new().append(true).open(format!("{}{}",LOGPATH,"/server_log.log"));
+    let file = OpenOptions::new().create(true).open(format!("{}{}",LOGPATH,"/server_log.log"));
     if file.is_err()
     {
         eprintln!("[Create {}] {}","ERROR".red().bold().blink(),file.as_ref().unwrap_err());
