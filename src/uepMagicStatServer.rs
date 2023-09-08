@@ -2,6 +2,8 @@
 #![allow(unused_variables)]
 #![allow(unused_must_use)]
 
+#[macro_use] extern crate log;
+
 mod functions_db_related;
 mod class_Comments;
 mod class_Matches;
@@ -13,7 +15,7 @@ mod statics;
 
 use std::{env, thread};
 use std::fs::OpenOptions;
-use std::io::{stdout, Write};
+use std::io::{stdout};
 use std::os::fd::AsRawFd;
 use std::process::exit;
 use actix_web::{App, HttpServer, web};
@@ -24,6 +26,7 @@ use termios::tcsetattr;
 
 use signal_hook::consts::SIGINT;
 use signal_hook::iterator::Signals;
+use simplelog::{ColorChoice, CombinedLogger, Config, LevelFilter, TerminalMode, TermLogger, WriteLogger};
 
 use text_colorizer::{ColoredString, Colorize};
 
@@ -58,11 +61,20 @@ fn main()
         eprintln!("[Mkdir {}] {}","ERROR".red().bold().blink(),folder.unwrap_err());
     }
 
-    let file = OpenOptions::new().create(true).open(format!("{}{}",LOGPATH,"/server_log.log"));
+    let file = OpenOptions::new().write(true).create(true).open(format!("{}{}",LOGPATH,"/server_log.log"));
     if file.is_err()
     {
         eprintln!("[Create {}] {}","ERROR".red().bold().blink(),file.as_ref().unwrap_err());
     }
+
+    CombinedLogger::init
+      (
+          vec!
+          [
+              TermLogger::new(LevelFilter::Error,Config::default(),TerminalMode::Mixed,ColorChoice::AlwaysAnsi),
+              WriteLogger::new(LevelFilter::Info,Config::default(),file.unwrap())
+          ]
+      );
 
     let serveur = HttpServer::new
       (
@@ -72,7 +84,7 @@ fn main()
           }
       );
     println!("Serving on http://192.168.0.4:4040...");
-    file.unwrap().write("[START]".as_bytes());
+    info!("Server is on !!");
 
     let terminal = Term::stdout();
     terminal.hide_cursor();

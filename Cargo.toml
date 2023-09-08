@@ -19,6 +19,8 @@ actix-web = "1.0.9"
 serde = { version = "1.0.160", features = ["derive"]}
 signal-hook = "0.3.17"
 termios = "0.3.3"
+simplelog = "0.12.1"
+log = "0.4.19"
 
 [[bin]]
 path = "src/uepMagicStatServer.rs"
