@@ -81,9 +81,7 @@ fn main()
     if configterminal.is_ok()
     {
         let configset = configterminal.as_ref().unwrap().c_lflag;
-        eprintln!("AVANT\t{:b}",configset);
         configterminal.as_mut().unwrap().c_lflag &= !(ICANON|ECHO|ECHOCTL);
-        eprintln!("APRES\t{:b}",configterminal.as_ref().unwrap().c_lflag);
 
         let result = tcsetattr(stdout().as_raw_fd(), termios::TCSANOW,configterminal.as_ref().unwrap()).is_ok();
         if !result
@@ -99,14 +97,11 @@ fn main()
         thread::spawn
           (  move ||
             {
-                eprintln!("[{}]",terminal.as_raw_fd().to_string());
                 for thesignal in signals.unwrap().forever()
                 {
                     eprintln!("Received signal {:?}",thesignal);
                     let configset = configterminal.as_ref().unwrap().c_lflag;
-                    eprintln!("AVANT\t{:b}",configset);
                     configterminal.as_mut().unwrap().c_lflag |= ICANON|ECHO|ECHOCTL;
-                    eprintln!("APRES\t{:b}",configterminal.as_ref().unwrap().c_lflag);
 
                     let result = tcsetattr(stdout().as_raw_fd(), termios::TCSANOW,configterminal.as_ref().unwrap()).is_ok();
                     if !result
