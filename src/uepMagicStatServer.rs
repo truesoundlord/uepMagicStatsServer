@@ -18,7 +18,7 @@ use std::fs::OpenOptions;
 use std::io::{stdout};
 use std::os::fd::AsRawFd;
 use std::process::exit;
-use actix_web::{App, HttpServer, web};
+use actix_web::{App,HttpServer};
 use console::Term;
 use termios::os::linux::{ICANON, ECHO, ECHOCTL};
 use termios::tcsetattr;
@@ -31,10 +31,11 @@ use simplelog::{ColorChoice, CombinedLogger, Config, ConfigBuilder, LevelFilter,
 use text_colorizer::{ColoredString, Colorize};
 
 use crate::functions_db_related::establish_connection;
-use crate::functions_web_related::{actions, get_index};
+use crate::functions_web_related::{get_index};
 use crate::statics::LOGPATH;
 
-fn main()
+#[actix_web::main]
+async fn main()
 {
     let NomProgramme = env::args().next();
     println!("{} (test) 2023 RUST {}",NomProgramme.unwrap().replace("./","").as_str().bold().italic(),rustc_version::version().unwrap().to_string());
@@ -78,12 +79,10 @@ fn main()
           ]
       );
 
-    let serveur = HttpServer::new
+    let serveur=HttpServer::new
       (
-        ||
-          {
-              App::new().route("/",web::get().to(get_index)).route("/post",web::post().to(actions))
-          }
+          ||
+            App::new().service(get_index)
       );
     println!("Serving on http://192.168.0.4:4040...");
     info!("Server is on !!");
@@ -128,5 +127,5 @@ fn main()
             }
           );
     }
-    serveur.bind("192.168.0.4:4040").expect("error binding server to address").run().expect("error running server");
+    serveur.bind("192.168.0.4:4040").expect("error binding server to address").run().await;
 }

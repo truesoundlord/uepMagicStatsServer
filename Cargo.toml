@@ -15,12 +15,13 @@ console = "0.15.7"
 
 mysql = { version = "24.0.0" }
 
-actix-web = "1.0.9"
+actix-web = "4.0.1"
 serde = { version = "1.0.160", features = ["derive"]}
 signal-hook = "0.3.17"
 termios = "0.3.3"
 simplelog = "0.12.1"
 log = "0.4.19"
+tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
 
 [[bin]]
 path = "src/uepMagicStatServer.rs"
