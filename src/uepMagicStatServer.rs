@@ -22,13 +22,11 @@ use actix_web::{App,HttpServer};
 use console::Term;
 use termios::os::linux::{ICANON, ECHO, ECHOCTL};
 use termios::tcsetattr;
+use text_colorizer::{ColoredString, Colorize};
 
-
-use signal_hook::consts::SIGINT;
+use signal_hook::consts::{SIGHUP, SIGINT};
 use signal_hook::iterator::Signals;
 use simplelog::{ColorChoice, CombinedLogger, Config, ConfigBuilder, LevelFilter, TerminalMode, TermLogger, WriteLogger};
-
-use text_colorizer::{ColoredString, Colorize};
 
 use crate::functions_db_related::establish_connection;
 use crate::functions_web_related::{get_index};
@@ -62,7 +60,7 @@ async fn main()
         eprintln!("[Mkdir {}] {}","ERROR".red().bold().blink(),folder.unwrap_err());
     }
 
-    let file = OpenOptions::new().write(true).create(true).open(format!("{}{}",LOGPATH,"/server_log.log"));
+    let file = OpenOptions::new().create(true).append(true).open(format!("{}{}",LOGPATH,"/server_log.log"));
     if file.is_err()
     {
         eprintln!("[Create {}] {}","ERROR".red().bold().blink(),file.as_ref().unwrap_err());
@@ -93,7 +91,6 @@ async fn main()
     let mut configterminal = termios::Termios::from_fd(stdout().as_raw_fd());
     if configterminal.is_ok()
     {
-        let configset = configterminal.as_ref().unwrap().c_lflag;
         configterminal.as_mut().unwrap().c_lflag &= !(ICANON|ECHO|ECHOCTL);
 
         let result = tcsetattr(stdout().as_raw_fd(), termios::TCSANOW,configterminal.as_ref().unwrap()).is_ok();
@@ -103,7 +100,7 @@ async fn main()
         }
     }
 
-    let signals = Signals::new(&[SIGINT]);
+    let signals = Signals::new(&[SIGINT,SIGHUP]);
     if signals.is_ok()
     {
         println!("[{}] Signal handling on...","INFO".bright_blue());
@@ -112,18 +109,30 @@ async fn main()
             {
                 for thesignal in signals.unwrap().forever()
                 {
-                    info!("Received signal {:?}",thesignal);
-                    println!("[{}] {}","INFO".bright_cyan().bold(),"Manual shutdown of server or kill signal received... exiting".italic().bright_white());
-                    let configset = configterminal.as_ref().unwrap().c_lflag;
-                    configterminal.as_mut().unwrap().c_lflag |= ICANON|ECHO|ECHOCTL;
 
-                    let result = tcsetattr(stdout().as_raw_fd(), termios::TCSANOW,configterminal.as_ref().unwrap()).is_ok();
-                    if !result
+                    match thesignal
                     {
-                        eprintln!("[tcsetattr {} signal handle] failure !!","ERROR".red().bold().blink());
+                        SIGINT|SIGHUP =>
+                            {
+                                println!("[{}] {}","INFO".bright_cyan().bold(),"Manual shutdown of server or kill signal received... exiting".italic().bright_white());
+                                configterminal.as_mut().unwrap().c_lflag |= ICANON|ECHO|ECHOCTL;
+
+                                let result = tcsetattr(stdout().as_raw_fd(), termios::TCSANOW,configterminal.as_ref().unwrap()).is_ok();
+                                if !result
+                                {
+                                    eprintln!("[tcsetattr {} signal handle] failure !!","ERROR".red().bold().blink());
+                                }
+                                terminal.show_cursor();
+                                if thesignal == SIGHUP
+                                {
+                                    info!("Exiting with SIGHUP received");
+                                    break;
+                                }
+                            },
+                        _ => info!("Received signal {:?}",thesignal)
                     }
-                    terminal.show_cursor();
-                }
+                } // endfor
+                exit(0);
             }
           );
     }
