@@ -8,8 +8,8 @@ use actix_web::{get, HttpResponse};
 #[get("/")]
 async fn get_index() -> HttpResponse
 {
-	let mut htmldata = feedme("./www/html/index.html");
-	let cssdata = feedme ("./www/css/index.css");
+	let mut htmldata = feedme("www/html/index.html");
+	let cssdata = feedme ("www/css/index.css");
 
 	htmldata = htmldata.replace("{{BASE_CSS}}",&cssdata);
 
